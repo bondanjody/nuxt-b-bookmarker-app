@@ -27,7 +27,7 @@ export async function up(queryInterface: QueryInterface) {
       allowNull: false,
     },
     category: {
-      type: DataTypes.STRING(75),
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "b_bookmarker_categories_tbl",
@@ -36,7 +36,7 @@ export async function up(queryInterface: QueryInterface) {
       onDelete: "RESTRICT",
     },
     source: {
-      type: DataTypes.STRING(75),
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "b_bookmarker_sources_tbl",
@@ -45,7 +45,7 @@ export async function up(queryInterface: QueryInterface) {
       onDelete: "RESTRICT",
     },
     type: {
-      type: DataTypes.STRING(75),
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "b_bookmarker_types_tbl",
@@ -54,7 +54,7 @@ export async function up(queryInterface: QueryInterface) {
       onDelete: "RESTRICT",
     },
     creator: {
-      type: DataTypes.STRING(75),
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "b_bookmarker_creators_tbl",
