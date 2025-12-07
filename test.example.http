@@ -22,7 +22,7 @@ Authorization: Bearer {{token}}
 }
 
 ### Add New Category
-POST http://localhost:3000/api/category-management/add-new-category
+POST {{baseUrl}}/api/category-management/add-new-category
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -31,7 +31,7 @@ Authorization: Bearer {{token}}
 }
 
 ### Add New Source
-POST http://localhost:3000/api/source-management/add-new-source
+POST {{baseUrl}}/api/source-management/add-new-source
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -41,7 +41,7 @@ Authorization: Bearer {{token}}
 }
 
 ### Add New Type
-POST http://localhost:3000/api/type-management/add-new-type
+POST {{baseUrl}}/api/type-management/add-new-type
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -49,3 +49,27 @@ Authorization: Bearer {{token}}
   "name": "Video"
 }
 
+### Add New Item
+POST {{baseUrl}}/api/item-management/add-new-item
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "New Item Title",
+  "link": "https://example.com/new-item",
+  "notes": "Some notes about this item",
+  "category": "category-uuid-here",
+  "source": "source-uuid-here",
+  "type": "type-uuid-here",
+  "creator": "creator-uuid-here"
+}
+
+### Add New Creator
+POST {{baseUrl}}/api/creator-management/add-new-creator
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "New Creator",
+  "link": "https://example.com/new-creator"
+}
