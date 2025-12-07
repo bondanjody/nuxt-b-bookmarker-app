@@ -50,8 +50,8 @@ export default defineEventHandler(async (event) => {
   // ✅ Generate JWT
   const token = jwt.sign(
     {
-      username: user.username,
-      role: user.role,
+      username: storedUsername,
+      role: storedRole,
     },
     secret,
     signOptions
