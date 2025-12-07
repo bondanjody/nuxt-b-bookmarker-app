@@ -24,4 +24,4 @@ logs
 !.env.example
 
 # Testing files
-*.http
+test.http
