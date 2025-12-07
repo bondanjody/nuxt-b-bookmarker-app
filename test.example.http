@@ -1,0 +1,51 @@
+@baseUrl = http://localhost:3000
+@token = 
+
+### Login
+POST {{baseUrl}}/api/auth/login 
+Content-Type: "application/json"
+
+{
+    "username":"admin1",
+    "password":"admin123"
+}
+
+### Add New User
+POST {{baseUrl}}/api/user-management/add-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "username": "admin2",
+  "password": "admin123",
+  "role": "B.BM.ADMIN"
+}
+
+### Add New Category
+POST http://localhost:3000/api/category-management/add-new-category
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Programming"
+}
+
+### Add New Source
+POST http://localhost:3000/api/source-management/add-new-source
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "detikCom",
+  "link": "https://detik.com"
+}
+
+### Add New Type
+POST http://localhost:3000/api/type-management/add-new-type
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Video"
+}
+
