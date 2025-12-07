@@ -75,7 +75,7 @@ Authorization: Bearer {{token}}
 }
 
 ### Get All Creator By User
-POST {{baseUrl}}/api/creator-management/get-creator-by-user
+GET {{baseUrl}}/api/creator-management/get-creator-by-user
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
