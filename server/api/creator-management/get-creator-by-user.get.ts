@@ -1,10 +1,11 @@
+// server/api/creator-management/get-creator-by-user.get.ts
+
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import Creator from "~~/server/db/models/creator.model";
+import { UserRole } from "~~/server/db/models/user.model";
 
-// --------------------------------------------------
-// 🔐 Helper: Validasi JWT dan ambil username
-// --------------------------------------------------
+// Helper: Validasi JWT (semua role diperbolehkan)
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
 
@@ -26,47 +27,49 @@ async function authorize(event: H3Event) {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
     const username = decoded?.username;
+    const role = decoded?.role as UserRole | undefined;
 
-    if (!username) {
+    if (!username || !role) {
       throw createError({ statusCode: 401, message: "Invalid token payload" });
     }
 
-    return { username };
+    return { username, role };
   } catch (err) {
     throw createError({ statusCode: 401, message: "Invalid or expired token" });
   }
 }
 
-// --------------------------------------------------
-// 📌 Main Handler: Get Creator by User (username from token)
-// --------------------------------------------------
+// Main Handler: Get Creator by User
 export default defineEventHandler(async (event) => {
-  // 🔒 User harus login (role bebas)
+  // Pastikan pengguna sudah login (role bebas)
   const authUser = await authorize(event);
+  const { username } = authUser;
 
-  // Ambil data creator berdasarkan username yang ada di token
+  // Ambil data creator berdasarkan username
   const creators = await Creator.findAll({
     where: {
-      created_by: authUser.username,
-      is_active: true, // Hanya yang aktif
+      created_by: username,
+      is_active: true,
     },
   });
 
-  if (creators.length === 0) {
-    return {
-      message: "No creators found for this user.",
-      creators: [],
-    };
+  if (!creators || creators.length === 0) {
+    throw createError({
+      statusCode: 404,
+      message: "No creators found for the current user",
+    });
   }
 
+  // Format hasil yang dikembalikan
   return {
-    message: "Creators fetched successfully",
+    message: "Creators retrieved successfully",
     creators: creators.map((creator) => ({
       id: creator.dataValues.id,
       name: creator.dataValues.name,
       link: creator.dataValues.link,
+      is_active: creator.dataValues.is_active,
       created_at: creator.dataValues.created_at,
-      created_by: creator.dataValues.created_by,
+      updated_at: creator.dataValues.updated_at,
     })),
   };
 });

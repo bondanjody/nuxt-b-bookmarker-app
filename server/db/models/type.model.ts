@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../index";
+import Item from "./item.model";
 
 interface TypeAttributes {
   id: string;
@@ -38,6 +39,14 @@ class Type
   public created_by!: string;
   public updated_by?: string;
   public deleted_by?: string;
+
+  static associate() {
+    // Pastikan jika diperlukan relasi balik ke Item
+    Type.hasMany(Item, {
+      foreignKey: "type",
+      as: "items", // alias relasi
+    });
+  }
 }
 
 Type.init(
@@ -85,5 +94,7 @@ Type.init(
     timestamps: false,
   }
 );
+
+Type.associate();
 
 export default Type;

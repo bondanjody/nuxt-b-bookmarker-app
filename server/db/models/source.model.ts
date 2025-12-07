@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../index";
+import Item from "./item.model";
 
 interface SourceAttributes {
   id: string;
@@ -40,6 +41,14 @@ class Source
   public created_by!: string;
   public updated_by?: string;
   public deleted_by?: string;
+
+  static associate() {
+    // Pastikan jika diperlukan relasi balik ke Item
+    Source.hasMany(Item, {
+      foreignKey: "source",
+      as: "items", // alias relasi
+    });
+  }
 }
 
 Source.init(
@@ -91,5 +100,7 @@ Source.init(
     timestamps: false,
   }
 );
+
+Source.associate();
 
 export default Source;

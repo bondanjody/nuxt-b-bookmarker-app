@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../index";
+import Item from "./item.model";
 
 interface CreatorAttributes {
   id: string;
@@ -40,6 +41,15 @@ class Creator
   public created_by!: string;
   public updated_by?: string;
   public deleted_by?: string;
+
+  // Relasi dengan Item
+  static associate() {
+    // Relasi hasMany dengan Item
+    Creator.hasMany(Item, {
+      foreignKey: "creator", // Pastikan foreign key ini sesuai dengan kolom di model Item
+      as: "items", // Alias relasi untuk digunakan saat mengambil data
+    });
+  }
 }
 
 Creator.init(
@@ -91,5 +101,8 @@ Creator.init(
     timestamps: false,
   }
 );
+
+// Pastikan Anda memanggil associate di sini
+Creator.associate();
 
 export default Creator;

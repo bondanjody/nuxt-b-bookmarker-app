@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import sequelize from "../index";
+import Item from "./item.model";
 
 interface CategoryAttributes {
   id: string;
@@ -32,6 +33,14 @@ class Category
   public created_by!: string;
   public updated_by?: string;
   public deleted_by?: string;
+
+  static associate() {
+    // Pastikan jika diperlukan relasi balik ke Item
+    Category.hasMany(Item, {
+      foreignKey: "category",
+      as: "items", // alias relasi
+    });
+  }
 }
 
 Category.init(
@@ -79,5 +88,7 @@ Category.init(
     timestamps: false,
   }
 );
+
+Category.associate();
 
 export default Category;

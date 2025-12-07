@@ -94,3 +94,8 @@ GET {{baseUrl}}/api/type-management/get-type-by-user
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
+### Get All Item By User
+GET {{baseUrl}}/api/item-management/get-item-by-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
