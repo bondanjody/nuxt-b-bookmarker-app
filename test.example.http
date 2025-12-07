@@ -89,3 +89,8 @@ GET {{baseUrl}}/api/source-management/get-source-by-user
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
+### Get All Type By User
+GET {{baseUrl}}/api/type-management/get-type-by-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
