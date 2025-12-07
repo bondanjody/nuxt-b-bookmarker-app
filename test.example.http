@@ -73,3 +73,9 @@ Authorization: Bearer {{token}}
   "name": "New Creator",
   "link": "https://example.com/new-creator"
 }
+
+### Get All Creator By User
+POST {{baseUrl}}/api/creator-management/get-creator-by-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
