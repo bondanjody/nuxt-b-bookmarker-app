@@ -79,3 +79,8 @@ GET {{baseUrl}}/api/creator-management/get-creator-by-user
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
+### Get All Category By User
+GET {{baseUrl}}/api/category-management/get-category-by-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
