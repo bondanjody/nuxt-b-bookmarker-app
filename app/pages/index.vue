@@ -4,9 +4,9 @@
   >
     <UCard class="w-full max-w-sm">
       <div class="text-center mb-6">
-        <h1 class="text-3xl font-bold">Selamat Datang</h1>
+        <h1 class="text-3xl font-bold">Welcome ! 👋</h1>
         <p class="text-gray-500 dark:text-gray-400">
-          Silakan masukkan detail akun Anda.
+          Please fill your account detail.
         </p>
       </div>
 
@@ -36,28 +36,14 @@
           />
         </UFormGroup>
 
-        <div class="flex items-center justify-between">
-          <UCheckbox
-            v-model="state.rememberMe"
-            label="Ingat saya"
-            name="rememberMe"
-          />
-          <ULink
-            href="#"
-            class="text-sm font-medium text-primary hover:underline"
-          >
-            Lupa Password?
-          </ULink>
-        </div>
-
-        <UButton type="submit" block :loading="loading"> Masuk </UButton>
+        <UButton type="submit" block :loading="loading"> Login </UButton>
       </UForm>
 
       <template #footer>
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-          Belum punya akun?
+          Do not have an acoount yet ?
           <ULink href="#" class="font-medium text-primary hover:underline">
-            Daftar di sini
+            Sign up here
           </ULink>
         </p>
       </template>
