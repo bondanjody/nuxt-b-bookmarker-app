@@ -1,76 +1,157 @@
 <template>
-  <div>
-    <UPageHero
-      title="Nuxt Starter Template"
-      description="A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours."
-      :links="[{
-        label: 'Get started',
-        to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-        target: '_blank',
-        trailingIcon: 'i-lucide-arrow-right',
-        size: 'xl'
-      }, {
-        label: 'Use this template',
-        to: 'https://github.com/nuxt-ui-templates/starter',
-        target: '_blank',
-        icon: 'i-simple-icons-github',
-        size: 'xl',
-        color: 'neutral',
-        variant: 'subtle'
-      }]"
-    />
+  <div
+    class="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900"
+  >
+    <UCard class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold">Selamat Datang</h1>
+        <p class="text-gray-500 dark:text-gray-400">
+          Silakan masukkan detail akun Anda.
+        </p>
+      </div>
 
-    <UPageSection
-      id="features"
-      title="Everything you need to build modern Nuxt apps"
-      description="Start with a solid foundation. This template includes all the essentials for building production-ready applications with Nuxt UI's powerful component system."
-      :features="[{
-        icon: 'i-lucide-rocket',
-        title: 'Production-ready from day one',
-        description: 'Pre-configured with TypeScript, ESLint, Tailwind CSS, and all the best practices. Focus on building features, not setting up tooling.'
-      }, {
-        icon: 'i-lucide-palette',
-        title: 'Beautiful by default',
-        description: 'Leveraging Nuxt UI\'s design system with automatic dark mode, consistent spacing, and polished components that look great out of the box.'
-      }, {
-        icon: 'i-lucide-zap',
-        title: 'Lightning fast',
-        description: 'Optimized for performance with SSR/SSG support, automatic code splitting, and edge-ready deployment. Your users will love the speed.'
-      }, {
-        icon: 'i-lucide-blocks',
-        title: '100+ components included',
-        description: 'Access Nuxt UI\'s comprehensive component library. From forms to navigation, everything is accessible, responsive, and customizable.'
-      }, {
-        icon: 'i-lucide-code-2',
-        title: 'Developer experience first',
-        description: 'Auto-imports, hot module replacement, and TypeScript support. Write less boilerplate and ship more features.'
-      }, {
-        icon: 'i-lucide-shield-check',
-        title: 'Built for scale',
-        description: 'Enterprise-ready architecture with proper error handling, SEO optimization, and security best practices built-in.'
-      }]"
-    />
+      <UForm :state="state" class="space-y-4" @submit.prevent="handleLogin">
+        <UFormGroup label="Email" name="email" required :error="errors.email">
+          <UInput
+            v-model="state.email"
+            type="email"
+            placeholder="anda@contoh.com"
+            icon="i-heroicons-envelope"
+            @change="errors.email = ''"
+          />
+        </UFormGroup>
 
-    <UPageSection>
-      <UPageCTA
-        title="Ready to build your next Nuxt app?"
-        description="Join thousands of developers building with Nuxt and Nuxt UI. Get this template and start shipping today."
-        variant="subtle"
-        :links="[{
-          label: 'Start building',
-          to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-          target: '_blank',
-          trailingIcon: 'i-lucide-arrow-right',
-          color: 'neutral'
-        }, {
-          label: 'View on GitHub',
-          to: 'https://github.com/nuxt-ui-templates/starter',
-          target: '_blank',
-          icon: 'i-simple-icons-github',
-          color: 'neutral',
-          variant: 'outline'
-        }]"
-      />
-    </UPageSection>
+        <UFormGroup
+          label="Password"
+          name="password"
+          required
+          :error="errors.password"
+        >
+          <UInput
+            v-model="state.password"
+            type="password"
+            placeholder="••••••••"
+            icon="i-heroicons-lock-closed"
+            @change="errors.password = ''"
+          />
+        </UFormGroup>
+
+        <div class="flex items-center justify-between">
+          <UCheckbox
+            v-model="state.rememberMe"
+            label="Ingat saya"
+            name="rememberMe"
+          />
+          <ULink
+            href="#"
+            class="text-sm font-medium text-primary hover:underline"
+          >
+            Lupa Password?
+          </ULink>
+        </div>
+
+        <UButton type="submit" block :loading="loading"> Masuk </UButton>
+      </UForm>
+
+      <template #footer>
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+          Belum punya akun?
+          <ULink href="#" class="font-medium text-primary hover:underline">
+            Daftar di sini
+          </ULink>
+        </p>
+      </template>
+    </UCard>
   </div>
 </template>
+
+<script setup lang="ts">
+// 1. Definisikan Tipe State
+interface LoginState {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+// 2. Definisikan State (Data Form)
+const state = reactive<LoginState>({
+  email: "",
+  password: "",
+  rememberMe: false,
+});
+
+// 3. State untuk Error Manual
+const errors = reactive({
+  email: "",
+  password: "",
+});
+
+const loading = ref(false);
+const toast = useToast();
+
+// 4. Fungsi Validasi Manual
+function validate(): boolean {
+  let isValid = true;
+  errors.email = "";
+  errors.password = "";
+
+  // Validasi Email
+  if (!state.email) {
+    errors.email = "Email wajib diisi.";
+    isValid = false;
+  } else if (!/\S+@\S+\.\S+/.test(state.email)) {
+    errors.email = "Format email tidak valid.";
+    isValid = false;
+  }
+
+  // Validasi Password
+  if (!state.password) {
+    errors.password = "Password wajib diisi.";
+    isValid = false;
+  } else if (state.password.length < 6) {
+    errors.password = "Password minimal 6 karakter.";
+    isValid = false;
+  }
+
+  return isValid;
+}
+
+// 5. Fungsi Login Utama
+async function handleLogin() {
+  // 5a. Lakukan Validasi
+  if (!validate()) {
+    // Jika validasi gagal, hentikan proses
+    toast.add({
+      title: "Validasi Gagal",
+      description: "Mohon periksa kembali input Anda.",
+      icon: "i-heroicons-exclamation-circle",
+      color: "red",
+    });
+    return;
+  }
+
+  // 5b. Jika Validasi Berhasil, Lanjutkan Proses Login
+  loading.value = true;
+  console.log("Data Formulir:", state);
+
+  // Simulasi proses login (memanggil API)
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  // Tampilkan notifikasi sukses
+  toast.add({
+    title: "Login Berhasil!",
+    description: `Selamat datang kembali, ${state.email}.`,
+    icon: "i-heroicons-check-circle",
+    color: "green",
+  });
+
+  loading.value = false;
+  // Contoh: Redirect ke halaman dashboard
+  // await navigateTo('/dashboard');
+}
+
+// 6. Setup Metadata Halaman
+definePageMeta({
+  layout: false,
+});
+</script>
