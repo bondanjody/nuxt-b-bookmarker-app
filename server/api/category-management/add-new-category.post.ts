@@ -1,7 +1,7 @@
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Category from "../../db/models/category.model";
-import User, { UserRole } from "../../db/models/user.model";
+import { Category, UserRole } from "../../db/models";
+import { v4 as uuidv4 } from "uuid";
 
 // --------------------------------------------------
 // 🔐 Helper: Validasi JWT (all roles allowed)
@@ -58,8 +58,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // --------------------------------------------------
-  // 🔍 VALIDASI CATEGORY SUDAH ADA
-  // WHERE name = ? AND created_by = ? AND is_active = TRUE
+  // 🔍 Validasi category sudah ada untuk user
   // --------------------------------------------------
   const existing = await Category.findOne({
     where: {
@@ -76,10 +75,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Buat ID UUID
-  const { v4: uuidv4 } = await import("uuid");
-
-  // Insert kategori baru
+  // --------------------------------------------------
+  // ✅ Insert kategori baru
+  // --------------------------------------------------
   const newCategory = await Category.create({
     id: uuidv4(),
     name,
@@ -89,8 +87,9 @@ export default defineEventHandler(async (event) => {
   });
 
   return {
+    status: true,
     message: "Category created successfully",
-    category: {
+    data: {
       id: newCategory.dataValues.id,
       name: newCategory.dataValues.name,
       created_by: newCategory.dataValues.created_by,

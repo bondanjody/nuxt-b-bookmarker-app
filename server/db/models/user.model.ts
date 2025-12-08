@@ -1,25 +1,36 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../index";
+import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 
-export type UserRole = "B.BM.SUPERADMIN" | "B.BM.ADMIN" | "B.BM.USER";
+// ==============================
+// 1️⃣ Define UserRole Type
+// ==============================
+export type UserRole = "B.BM.USER" | "B.BM.ADMIN" | "B.BM.SUPERADMIN";
 
-interface UserAttributes {
+/**
+ * Interface atribut penuh user
+ */
+export interface UserAttributes {
   username: string;
   password: string;
-  role?: UserRole;
-  is_active?: boolean;
-  created_at: Date;
-  updated_at?: Date | null;
+  role: UserRole; // gunakan UserRole type
+  is_active: boolean;
+  created_at?: Date;
+  updated_at?: Date;
   deleted_at?: Date | null;
 }
 
-interface UserCreationAttributes
+/**
+ * Atribut opsional saat create
+ */
+export interface UserCreationAttributes
   extends Optional<
     UserAttributes,
-    "role" | "is_active" | "updated_at" | "deleted_at"
+    "role" | "is_active" | "created_at" | "updated_at" | "deleted_at"
   > {}
 
-class User
+/**
+ * Model class
+ */
+export class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
@@ -27,48 +38,61 @@ class User
   public password!: string;
   public role!: UserRole;
   public is_active!: boolean;
-  public created_at!: Date;
-  public updated_at?: Date;
-  public deleted_at?: Date;
+
+  public readonly created_at!: Date;
+  public readonly updated_at!: Date;
+  public readonly deleted_at!: Date | null;
 }
 
-User.init(
-  {
-    username: {
-      type: DataTypes.STRING(75),
-      primaryKey: true,
-      allowNull: false,
+/**
+ * Init model
+ */
+export default function initUserModel(sequelize: Sequelize): typeof User {
+  User.init(
+    {
+      username: {
+        type: DataTypes.STRING(75),
+        primaryKey: true,
+        allowNull: false,
+      },
+      password: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      role: {
+        type: DataTypes.ENUM("B.BM.USER", "B.BM.ADMIN", "B.BM.SUPERADMIN"),
+        allowNull: false,
+        defaultValue: "B.BM.USER",
+      },
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+      },
+      deleted_at: {
+        type: DataTypes.DATE,
+      },
     },
-    password: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    role: {
-      type: DataTypes.ENUM("B.BM.SUPERADMIN", "B.BM.ADMIN", "B.BM.USER"),
-      defaultValue: "B.BM.USER",
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    deleted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-  },
-  {
-    sequelize,
-    tableName: "b_bookmarker_users_tbl",
-    timestamps: false,
-  }
-);
+    {
+      sequelize,
+      tableName: "b_bookmarker_users_tbl",
+      modelName: "User",
 
-export default User;
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+
+      paranoid: true,
+      deletedAt: "deleted_at",
+    }
+  );
+
+  return User;
+}

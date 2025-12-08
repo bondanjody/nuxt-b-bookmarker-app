@@ -1,16 +1,16 @@
-import { DataTypes, Model, Optional } from "sequelize";
-import sequelize from "../index";
-import Item from "./item.model";
+import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 
-interface CreatorAttributes {
+/**
+ * Interface atribut Creator
+ */
+export interface CreatorAttributes {
   id: string;
   name: string;
   link: string;
+  is_active: boolean;
 
-  is_active?: boolean;
-
-  created_at: Date;
-  updated_at?: Date | null;
+  created_at?: Date;
+  updated_at?: Date;
   deleted_at?: Date | null;
 
   created_by: string;
@@ -18,91 +18,102 @@ interface CreatorAttributes {
   deleted_by?: string | null;
 }
 
-interface CreatorCreationAttributes
+/**
+ * Atribut opsional saat create
+ */
+export interface CreatorCreationAttributes
   extends Optional<
     CreatorAttributes,
-    "is_active" | "updated_at" | "deleted_at" | "updated_by" | "deleted_by"
+    | "id"
+    | "is_active"
+    | "created_at"
+    | "updated_at"
+    | "deleted_at"
+    | "updated_by"
+    | "deleted_by"
   > {}
 
-class Creator
+/**
+ * Model class
+ */
+export class Creator
   extends Model<CreatorAttributes, CreatorCreationAttributes>
   implements CreatorAttributes
 {
   public id!: string;
   public name!: string;
   public link!: string;
-
   public is_active!: boolean;
 
-  public created_at!: Date;
-  public updated_at?: Date;
-  public deleted_at?: Date;
+  public readonly created_at!: Date;
+  public readonly updated_at!: Date;
+  public readonly deleted_at!: Date | null;
 
   public created_by!: string;
-  public updated_by?: string;
-  public deleted_by?: string;
-
-  // Relasi dengan Item
-  static associate() {
-    // Relasi hasMany dengan Item
-    Creator.hasMany(Item, {
-      foreignKey: "creator", // Pastikan foreign key ini sesuai dengan kolom di model Item
-      as: "items", // Alias relasi untuk digunakan saat mengambil data
-    });
-  }
+  public updated_by!: string | null;
+  public deleted_by!: string | null;
 }
 
-Creator.init(
-  {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    link: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    deleted_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    created_by: {
-      type: DataTypes.STRING(75),
-      allowNull: false,
-    },
-    updated_by: {
-      type: DataTypes.STRING(75),
-      allowNull: true,
-    },
-    deleted_by: {
-      type: DataTypes.STRING(75),
-      allowNull: true,
-    },
-  },
-  {
-    sequelize,
-    tableName: "b_bookmarker_creators_tbl",
-    timestamps: false,
-  }
-);
+/**
+ * Init model
+ */
+export default function initCreatorModel(sequelize: Sequelize): typeof Creator {
+  Creator.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
+      name: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+      },
+      link: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
 
-// Pastikan Anda memanggil associate di sini
-Creator.associate();
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+      },
+      deleted_at: {
+        type: DataTypes.DATE,
+      },
 
-export default Creator;
+      created_by: {
+        type: DataTypes.STRING(75),
+        allowNull: false,
+      },
+      updated_by: {
+        type: DataTypes.STRING(75),
+      },
+      deleted_by: {
+        type: DataTypes.STRING(75),
+      },
+    },
+    {
+      sequelize,
+      tableName: "b_bookmarker_creators_tbl",
+      modelName: "Creator",
+
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+
+      paranoid: true,
+      deletedAt: "deleted_at",
+    }
+  );
+
+  return Creator;
+}

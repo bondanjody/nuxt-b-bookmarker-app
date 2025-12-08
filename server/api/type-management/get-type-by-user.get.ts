@@ -2,10 +2,11 @@
 
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Type from "~~/server/db/models/type.model";
+import { Type, User } from "~~/server/db/models"; // import dari index.ts
+import type { UserRole } from "~~/server/db/models/user.model";
 
 // --------------------------------------------------
-// 🔐 Helper: Validasi JWT (all roles allowed)
+// 🔐 Helper: Validasi JWT (semua role diperbolehkan)
 // --------------------------------------------------
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
@@ -28,7 +29,7 @@ async function authorize(event: H3Event) {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
     const username = decoded?.username;
-    const role = decoded?.role;
+    const role = decoded?.role as UserRole | undefined;
 
     if (!username || !role) {
       throw createError({ statusCode: 401, message: "Invalid token payload" });
@@ -41,36 +42,38 @@ async function authorize(event: H3Event) {
 }
 
 // --------------------------------------------------
-// 📌 Main Handler: Get Type By User
+// 📌 Main Handler: Get Type by User
 // --------------------------------------------------
 export default defineEventHandler(async (event) => {
-  // 🔒 User harus login
+  // Pastikan pengguna sudah login (role bebas)
   const authUser = await authorize(event);
+  const { username } = authUser;
 
-  // Cari jenis berdasarkan user yang login (created_by)
+  // Ambil semua type milik user yang aktif
   const types = await Type.findAll({
     where: {
-      created_by: authUser.username, // Menyaring jenis berdasarkan user yang membuatnya
-      is_active: true, // Hanya jenis yang aktif
+      created_by: username,
+      is_active: true,
     },
+    order: [["created_at", "DESC"]], // opsional: urut berdasarkan tanggal dibuat
   });
 
-  if (types.length === 0) {
-    throw createError({
-      statusCode: 404,
-      message: "No types found for this user",
-    });
+  if (!types || types.length === 0) {
+    return {
+      message: "No types found for the current user",
+      types: [],
+    };
   }
 
-  // Kembalikan data jenis
+  // Format hasil yang dikembalikan
   return {
-    message: "Types fetched successfully",
+    message: "Types retrieved successfully",
     types: types.map((type) => ({
       id: type.dataValues.id,
       name: type.dataValues.name,
-      created_by: type.dataValues.created_by,
-      created_at: type.dataValues.created_at,
       is_active: type.dataValues.is_active,
+      created_at: type.dataValues.created_at,
+      updated_at: type.dataValues.updated_at,
     })),
   };
 });

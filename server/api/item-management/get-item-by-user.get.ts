@@ -2,12 +2,8 @@
 
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-// import Item from "~~/server/db/models/item.model";
-import Item from "~~/server/db/models/item.model";
-import Category from "~~/server/db/models/category.model";
-import Source from "~~/server/db/models/source.model";
-import Type from "~~/server/db/models/type.model";
-import Creator from "~~/server/db/models/creator.model";
+import * as models from "~~/server/db/models"; // ✅
+const { Item, Category, Source, Type, Creator } = models;
 import { UserRole } from "~~/server/db/models/user.model";
 
 // --------------------------------------------------
@@ -41,7 +37,7 @@ async function authorize(event: H3Event) {
     }
 
     return { username, role };
-  } catch (err) {
+  } catch {
     throw createError({ statusCode: 401, message: "Invalid or expired token" });
   }
 }
@@ -50,42 +46,37 @@ async function authorize(event: H3Event) {
 // 📌 Main Handler: Get Item by User
 // --------------------------------------------------
 export default defineEventHandler(async (event) => {
-  // 🔒 User harus login (role bebas)
   const authUser = await authorize(event);
-
   const { username } = authUser;
 
   // Ambil item yang dibuat oleh user berdasarkan username
   const items = await Item.findAll({
-    where: {
-      created_by: username,
-      is_active: true,
-    },
+    where: { created_by: username, is_active: true },
     include: [
       {
         model: Category,
-        as: "categoryDetails", // alias untuk Category
+        as: "category_data",
         attributes: ["id", "name", "is_active"],
       },
       {
         model: Source,
-        as: "sourceDetails", // alias untuk Source
+        as: "source_data",
         attributes: ["id", "name", "link", "is_active"],
       },
       {
         model: Type,
-        as: "typeDetails", // alias untuk Type
+        as: "type_data",
         attributes: ["id", "name", "is_active"],
       },
       {
         model: Creator,
-        as: "creatorDetails", // alias untuk Creator
+        as: "creator_data",
         attributes: ["id", "name", "link", "is_active"],
       },
     ],
+    order: [["created_at", "DESC"]], // optional: urutkan berdasarkan created_at terbaru
   });
 
-  // Jika tidak ada item ditemukan
   if (!items || items.length === 0) {
     throw createError({
       statusCode: 404,
@@ -93,25 +84,23 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  console.log("Nilai item : ", items);
-
-  // Mengubah data response sesuai kebutuhan
+  // Format response tanpa dataValues
   const result = items.map((item) => ({
-    id: item.id,
-    title: item.title,
-    link: item.link,
-    is_done: item.is_done,
-    notes: item.notes,
-    created_at: item.created_at,
-    updated_at: item.updated_at,
-    is_active: item.is_active,
+    id: item.dataValues.id,
+    title: item.dataValues.title,
+    link: item.dataValues.link,
+    notes: item.dataValues.notes,
+    is_done: item.dataValues.is_done,
+    is_active: item.dataValues.is_active,
+    created_at: item.dataValues.created_at,
+    updated_at: item.dataValues.updated_at,
     created_by: item.created_by,
     updated_by: item.updated_by,
     deleted_by: item.deleted_by,
-    category: item.categoryDetails,
-    source: item.sourceDetails,
-    type: item.typeDetails,
-    creator: item.creatorDetails,
+    category: (item as any).category_data,
+    source: (item as any).source_data,
+    type: (item as any).type_data,
+    creator: (item as any).creator_data,
   }));
 
   return {

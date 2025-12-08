@@ -1,183 +1,108 @@
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Category from "../../db/models/category.model";
-import Source from "../../db/models/source.model";
-import Type from "../../db/models/type.model";
-import Creator from "../../db/models/creator.model"; // Import model creator
-import Item from "../../db/models/item.model";
+import {
+  Category,
+  Source,
+  Type,
+  Creator,
+  Item,
+  UserRole,
+} from "../../db/models";
+import { v4 as uuidv4 } from "uuid";
 
-// Helper untuk validasi JWT dan mengautentikasi user
+// 🔐 Helper JWT
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
-
-  if (!authHeader) {
+  if (!authHeader)
     throw createError({
       statusCode: 401,
       message: "Authorization header missing",
     });
-  }
 
   const token = authHeader.split(" ")[1];
-  if (!token) {
+  if (!token)
     throw createError({ statusCode: 401, message: "Token not provided" });
-  }
 
   const config = useRuntimeConfig();
-
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
     const username = decoded?.username;
-    const role = decoded?.role;
-
-    if (!username || !role) {
+    const role = decoded?.role as UserRole | undefined;
+    if (!username || !role)
       throw createError({ statusCode: 401, message: "Invalid token payload" });
-    }
-
     return { username, role };
-  } catch (err) {
+  } catch {
     throw createError({ statusCode: 401, message: "Invalid or expired token" });
   }
 }
 
-// Function to generate a unique UUID
-async function generateUniqueId() {
-  const { v4: uuidv4 } = await import("uuid");
-
-  let uniqueId = uuidv4();
-  let itemExists = await Item.findOne({
-    where: { id: uniqueId },
-  });
-
-  while (itemExists) {
-    uniqueId = uuidv4();
-    itemExists = await Item.findOne({
-      where: { id: uniqueId },
-    });
-  }
-
-  return uniqueId;
-}
-
-// Main handler untuk menambahkan item baru
 export default defineEventHandler(async (event) => {
-  // 1. User harus login
   const authUser = await authorize(event);
 
-  // 2. Ambil body input
   const body = await readBody(event);
   const { title, link, notes, category, source, type, creator } = body;
 
   if (!title || !link || !notes || !category || !source || !type || !creator) {
-    throw createError({
-      statusCode: 400,
-      message:
-        "Title, link, notes, category, source, type, and creator are required",
-    });
+    throw createError({ statusCode: 400, message: "All fields are required" });
   }
 
-  // 3. Validasi category, source, type, creator
+  // Validasi relasi (hanya item aktif)
   const [categoryRecord, sourceRecord, typeRecord, creatorRecord] =
     await Promise.all([
-      Category.findOne({
-        where: {
-          id: category,
-          is_active: true,
-          created_by: authUser.username,
-        },
-      }),
-      Source.findOne({
-        where: {
-          id: source,
-          is_active: true,
-          created_by: authUser.username,
-        },
-      }),
-      Type.findOne({
-        where: {
-          id: type,
-          is_active: true,
-          created_by: authUser.username,
-        },
-      }),
-      Creator.findOne({
-        where: {
-          id: creator,
-          is_active: true,
-          created_by: authUser.username,
-        },
-      }),
+      Category.findOne({ where: { id: category, is_active: true } }),
+      Source.findOne({ where: { id: source, is_active: true } }),
+      Type.findOne({ where: { id: type, is_active: true } }),
+      Creator.findOne({ where: { id: creator, is_active: true } }),
     ]);
 
-  if (!categoryRecord) {
+  if (!categoryRecord)
     throw createError({
       statusCode: 404,
-      message: "Category not found or inactive, or does not belong to the user",
+      message: "Category not found or inactive",
     });
-  }
-
-  if (!sourceRecord) {
+  if (!sourceRecord)
     throw createError({
       statusCode: 404,
-      message: "Source not found or inactive, or does not belong to the user",
+      message: "Source not found or inactive",
     });
-  }
-
-  if (!typeRecord) {
+  if (!typeRecord)
     throw createError({
       statusCode: 404,
-      message: "Type not found or inactive, or does not belong to the user",
+      message: "Type not found or inactive",
     });
-  }
-
-  if (!creatorRecord) {
+  if (!creatorRecord)
     throw createError({
       statusCode: 404,
-      message: "Creator not found or inactive, or does not belong to the user",
+      message: "Creator not found or inactive",
     });
-  }
 
-  // 5. Validasi Duplikasi Item berdasarkan title, link, category, source, type, creator
+  // Validasi duplikasi
   const existingItem = await Item.findOne({
-    where: {
-      title,
-      link,
-      category,
-      source,
-      type,
-      is_active: true, // Pastikan hanya item yang aktif yang diperiksa
-    },
+    where: { title, link, category, source, type, creator, is_active: true },
   });
+  if (existingItem)
+    throw createError({ statusCode: 409, message: "Item already exists" });
 
-  if (existingItem) {
-    throw createError({
-      statusCode: 409,
-      message:
-        "An item with the same title, link, category, source, and type already exists",
-    });
-  }
-
-  // 6. Generate unique UUID untuk ID baru
-  const newItemId = await generateUniqueId();
-
-  // 7. Tambahkan item baru ke database
+  // Tambah item
   const newItem = await Item.create({
-    id: newItemId,
+    id: uuidv4(),
     title,
     link,
-    is_done: false,
     notes,
     category,
     source,
     type,
     creator,
+    is_done: false,
     is_active: true,
     created_at: new Date(),
-    created_by: authUser.username, // Created by user yang login
+    created_by: authUser.username,
   });
 
   return {
+    status: true,
     message: "Item created successfully",
-    item: {
+    data: {
       id: newItem.dataValues.id,
       title: newItem.dataValues.title,
       link: newItem.dataValues.link,
@@ -186,8 +111,10 @@ export default defineEventHandler(async (event) => {
       source: newItem.dataValues.source,
       type: newItem.dataValues.type,
       creator: newItem.dataValues.creator,
+      is_done: newItem.dataValues.is_done,
       is_active: newItem.dataValues.is_active,
       created_at: newItem.dataValues.created_at,
+      created_by: newItem.dataValues.created_by,
     },
   };
 });

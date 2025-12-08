@@ -2,10 +2,12 @@
 
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Creator from "~~/server/db/models/creator.model";
-import { UserRole } from "~~/server/db/models/user.model";
+import { Creator, User } from "~~/server/db/models"; // import dari index.ts
+import type { UserRole } from "~~/server/db/models/user.model";
 
-// Helper: Validasi JWT (semua role diperbolehkan)
+// --------------------------------------------------
+// 🔐 Helper: Validasi JWT (semua role diperbolehkan)
+// --------------------------------------------------
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
 
@@ -39,25 +41,28 @@ async function authorize(event: H3Event) {
   }
 }
 
-// Main Handler: Get Creator by User
+// --------------------------------------------------
+// 📌 Main Handler: Get Creator by User
+// --------------------------------------------------
 export default defineEventHandler(async (event) => {
   // Pastikan pengguna sudah login (role bebas)
   const authUser = await authorize(event);
   const { username } = authUser;
 
-  // Ambil data creator berdasarkan username
+  // Ambil semua creator milik user yang aktif
   const creators = await Creator.findAll({
     where: {
       created_by: username,
       is_active: true,
     },
+    order: [["created_at", "DESC"]], // opsional: urut berdasarkan tanggal dibuat
   });
 
   if (!creators || creators.length === 0) {
-    throw createError({
-      statusCode: 404,
+    return {
       message: "No creators found for the current user",
-    });
+      creators: [],
+    };
   }
 
   // Format hasil yang dikembalikan

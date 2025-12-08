@@ -1,9 +1,7 @@
-// server/api/type-management/add-new-type.post.ts
-
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Type from "../../db/models/type.model"; // pastikan path sesuai
-import User, { UserRole } from "../../db/models/user.model";
+import { Type, UserRole } from "../../db/models";
+import { v4 as uuidv4 } from "uuid";
 
 // --------------------------------------------------
 // 🔐 Helper: Validasi JWT (all roles allowed)
@@ -36,7 +34,7 @@ async function authorize(event: H3Event) {
     }
 
     return { username, role };
-  } catch (err) {
+  } catch {
     throw createError({ statusCode: 401, message: "Invalid or expired token" });
   }
 }
@@ -59,7 +57,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Pastikan tipe belum ada untuk user yang sama dan is_active = true
+  // --------------------------------------------------
+  // 🔍 Validasi type sudah ada untuk user
+  // --------------------------------------------------
   const existing = await Type.findOne({
     where: {
       name,
@@ -71,14 +71,13 @@ export default defineEventHandler(async (event) => {
   if (existing) {
     throw createError({
       statusCode: 409,
-      message: "Type already exists for this user",
+      message: "You already have an active type with this name",
     });
   }
 
-  // Buat ID manual karena model Type menggunakan UUID
-  const { v4: uuidv4 } = await import("uuid");
-
-  // Insert tipe baru
+  // --------------------------------------------------
+  // ✅ Insert type baru
+  // --------------------------------------------------
   const newType = await Type.create({
     id: uuidv4(),
     name,
@@ -88,8 +87,9 @@ export default defineEventHandler(async (event) => {
   });
 
   return {
+    status: true,
     message: "Type created successfully",
-    type: {
+    data: {
       id: newType.dataValues.id,
       name: newType.dataValues.name,
       created_by: newType.dataValues.created_by,

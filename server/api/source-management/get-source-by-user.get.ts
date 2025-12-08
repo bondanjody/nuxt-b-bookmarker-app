@@ -2,10 +2,11 @@
 
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Source from "~~/server/db/models/source.model";
+import { Source, User } from "~~/server/db/models"; // import dari index.ts
+import type { UserRole } from "~~/server/db/models/user.model";
 
 // --------------------------------------------------
-// 🔐 Helper: Validasi JWT (all roles allowed)
+// 🔐 Helper: Validasi JWT (semua role diperbolehkan)
 // --------------------------------------------------
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
@@ -28,7 +29,7 @@ async function authorize(event: H3Event) {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
     const username = decoded?.username;
-    const role = decoded?.role;
+    const role = decoded?.role as UserRole | undefined;
 
     if (!username || !role) {
       throw createError({ statusCode: 401, message: "Invalid token payload" });
@@ -41,37 +42,39 @@ async function authorize(event: H3Event) {
 }
 
 // --------------------------------------------------
-// 📌 Main Handler: Get Source By User
+// 📌 Main Handler: Get source by User
 // --------------------------------------------------
 export default defineEventHandler(async (event) => {
-  // 🔒 User harus login
+  // Pastikan pengguna sudah login (role bebas)
   const authUser = await authorize(event);
+  const { username } = authUser;
 
-  // Cari sumber berdasarkan user yang login (created_by)
+  // Ambil semua source milik user yang aktif
   const sources = await Source.findAll({
     where: {
-      created_by: authUser.username, // Menyaring sumber berdasarkan user yang membuatnya
-      is_active: true, // Hanya sumber yang aktif
+      created_by: username,
+      is_active: true,
     },
+    order: [["created_at", "DESC"]], // opsional: urut berdasarkan tanggal dibuat
   });
 
-  if (sources.length === 0) {
-    throw createError({
-      statusCode: 404,
-      message: "No sources found for this user",
-    });
+  if (!sources || sources.length === 0) {
+    return {
+      message: "No sources found for the current user",
+      sources: [],
+    };
   }
 
-  // Kembalikan data sumber
+  // Format hasil yang dikembalikan
   return {
-    message: "Sources fetched successfully",
+    message: "Sources retrieved successfully",
     sources: sources.map((source) => ({
       id: source.dataValues.id,
       name: source.dataValues.name,
       link: source.dataValues.link,
-      created_by: source.dataValues.created_by,
-      created_at: source.dataValues.created_at,
       is_active: source.dataValues.is_active,
+      created_at: source.dataValues.created_at,
+      updated_at: source.dataValues.updated_at,
     })),
   };
 });

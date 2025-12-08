@@ -1,4 +1,5 @@
-import User, { UserRole } from "../../db/models/user.model";
+import { User } from "../../db/models"; // ✅ IMPORT DARI MODELS INDEX
+import type { UserRole } from "../../db/models/user.model";
 import bcrypt from "bcrypt";
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -32,9 +33,6 @@ async function authorize(event: H3Event, allowedRoles: UserRole[]) {
       typeof decoded === "object" && "role" in decoded
         ? decoded.role
         : undefined;
-
-    console.log("Decoded username:", username);
-    console.log("Decoded role:", role);
 
     if (!username || !role) {
       throw createError({ statusCode: 401, message: "Invalid token payload" });

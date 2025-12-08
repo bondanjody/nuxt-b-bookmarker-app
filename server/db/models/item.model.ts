@@ -1,13 +1,13 @@
-// server/db/models/item.model.ts
+import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 
-import { DataTypes, Model, Optional, Association } from "sequelize";
-import sequelize from "../index";
-
-interface ItemAttributes {
+/**
+ * Interface atribut Item
+ */
+export interface ItemAttributes {
   id: string;
   title: string;
   link: string;
-  is_done?: boolean;
+  is_done: boolean;
   notes: string;
 
   category: string;
@@ -15,96 +15,150 @@ interface ItemAttributes {
   type: string;
   creator: string;
 
-  is_active?: boolean;
+  is_active: boolean;
 
-  created_at: Date;
-  updated_at?: Date | null;
+  created_at?: Date;
+  updated_at?: Date;
   deleted_at?: Date | null;
 
   created_by: string;
   updated_by?: string | null;
   deleted_by?: string | null;
-
-  // Menambahkan relasi sebagai properti tambahan
-  categoryDetails?: any; // Relasi ke Category
-  sourceDetails?: any; // Relasi ke Source
-  typeDetails?: any; // Relasi ke Type
-  creatorDetails?: any; // Relasi ke Creator
 }
 
-interface ItemCreationAttributes
+/**
+ * Atribut opsional saat create
+ */
+export interface ItemCreationAttributes
   extends Optional<
     ItemAttributes,
+    | "id"
     | "is_done"
     | "is_active"
+    | "created_at"
     | "updated_at"
     | "deleted_at"
     | "updated_by"
     | "deleted_by"
   > {}
 
-class Item extends Model<ItemAttributes, ItemCreationAttributes> {
+/**
+ * Model class
+ */
+export class Item
+  extends Model<ItemAttributes, ItemCreationAttributes>
+  implements ItemAttributes
+{
   public id!: string;
   public title!: string;
   public link!: string;
   public is_done!: boolean;
   public notes!: string;
+
   public category!: string;
   public source!: string;
   public type!: string;
   public creator!: string;
+
   public is_active!: boolean;
-  public created_at!: Date;
-  public updated_at?: Date;
-  public deleted_at?: Date;
+
+  public readonly created_at!: Date;
+  public readonly updated_at!: Date;
+  public readonly deleted_at!: Date | null;
+
   public created_by!: string;
-  public updated_by?: string;
-  public deleted_by?: string;
-
-  // Add relation fields here
-  public categoryDetails?: any;
-  public sourceDetails?: any;
-  public typeDetails?: any;
-  public creatorDetails?: any;
-
-  static associate() {
-    // Import models dynamically here to avoid circular dependency
-    const { Category, Source, Type, Creator } = require("./index"); // Dynamic import here
-
-    Item.belongsTo(Category, { foreignKey: "category", as: "categoryDetails" });
-    Item.belongsTo(Source, { foreignKey: "source", as: "sourceDetails" });
-    Item.belongsTo(Type, { foreignKey: "type", as: "typeDetails" });
-    Item.belongsTo(Creator, { foreignKey: "creator", as: "creatorDetails" });
-  }
+  public updated_by!: string | null;
+  public deleted_by!: string | null;
 }
 
-Item.init(
-  {
-    id: { type: DataTypes.UUID, primaryKey: true },
-    title: { type: DataTypes.STRING(255), allowNull: false },
-    link: { type: DataTypes.TEXT, allowNull: false },
-    is_done: { type: DataTypes.BOOLEAN, defaultValue: false },
-    notes: { type: DataTypes.STRING(200), allowNull: false },
-    category: { type: DataTypes.UUID, allowNull: false },
-    source: { type: DataTypes.UUID, allowNull: false },
-    type: { type: DataTypes.UUID, allowNull: false },
-    creator: { type: DataTypes.UUID, allowNull: false },
-    is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
-    created_at: { type: DataTypes.DATE, allowNull: false },
-    updated_at: { type: DataTypes.DATE, allowNull: true },
-    deleted_at: { type: DataTypes.DATE, allowNull: true },
-    created_by: { type: DataTypes.STRING(75), allowNull: false },
-    updated_by: { type: DataTypes.STRING(75), allowNull: true },
-    deleted_by: { type: DataTypes.STRING(75), allowNull: true },
-  },
-  {
-    sequelize,
-    tableName: "b_bookmarker_items_tbl",
-    timestamps: false,
-  }
-);
+/**
+ * Init model
+ */
+export default function initItemModel(sequelize: Sequelize): typeof Item {
+  Item.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true,
+      },
 
-// Call associate method after defining the model
-Item.associate();
+      title: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+      link: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      is_done: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      notes: {
+        type: DataTypes.STRING(200),
+        allowNull: false,
+      },
 
-export default Item;
+      category: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      source: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      type: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      creator: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+      },
+
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+      },
+      deleted_at: {
+        type: DataTypes.DATE,
+      },
+
+      created_by: {
+        type: DataTypes.STRING(75),
+        allowNull: false,
+      },
+      updated_by: {
+        type: DataTypes.STRING(75),
+      },
+      deleted_by: {
+        type: DataTypes.STRING(75),
+      },
+    },
+    {
+      sequelize,
+      tableName: "b_bookmarker_items_tbl",
+      modelName: "Item",
+
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+
+      paranoid: true,
+      deletedAt: "deleted_at",
+    }
+  );
+
+  return Item;
+}

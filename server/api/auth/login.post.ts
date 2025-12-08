@@ -1,4 +1,4 @@
-import User from "../../db/models/user.model";
+import { User } from "../../db/models";
 import bcrypt from "bcrypt";
 import jwt, { SignOptions, Secret } from "jsonwebtoken";
 

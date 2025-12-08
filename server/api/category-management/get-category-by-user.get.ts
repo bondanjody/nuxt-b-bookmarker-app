@@ -2,10 +2,11 @@
 
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Category from "~~/server/db/models/category.model";
+import { Category, User } from "~~/server/db/models"; // import dari index.ts
+import type { UserRole } from "~~/server/db/models/user.model";
 
 // --------------------------------------------------
-// 🔐 Helper: Validasi JWT (all roles allowed)
+// 🔐 Helper: Validasi JWT (semua role diperbolehkan)
 // --------------------------------------------------
 async function authorize(event: H3Event) {
   const authHeader = event.node.req.headers.authorization;
@@ -28,7 +29,7 @@ async function authorize(event: H3Event) {
     const decoded = jwt.verify(token, config.jwtSecret) as JwtPayload;
 
     const username = decoded?.username;
-    const role = decoded?.role;
+    const role = decoded?.role as UserRole | undefined;
 
     if (!username || !role) {
       throw createError({ statusCode: 401, message: "Invalid token payload" });
@@ -41,36 +42,38 @@ async function authorize(event: H3Event) {
 }
 
 // --------------------------------------------------
-// 📌 Main Handler: Get Category By User
+// 📌 Main Handler: Get Category by User
 // --------------------------------------------------
 export default defineEventHandler(async (event) => {
-  // 🔒 User harus login
+  // Pastikan pengguna sudah login (role bebas)
   const authUser = await authorize(event);
+  const { username } = authUser;
 
-  // Cari kategori berdasarkan user yang login (created_by)
+  // Ambil semua category milik user yang aktif
   const categories = await Category.findAll({
     where: {
-      created_by: authUser.username, // Menyaring kategori berdasarkan user yang membuatnya
-      is_active: true, // Hanya kategori yang aktif
+      created_by: username,
+      is_active: true,
     },
+    order: [["created_at", "DESC"]], // opsional: urut berdasarkan tanggal dibuat
   });
 
-  if (categories.length === 0) {
-    throw createError({
-      statusCode: 404,
-      message: "No categories found for this user",
-    });
+  if (!categories || categories.length === 0) {
+    return {
+      message: "No categories found for the current user",
+      categories: [],
+    };
   }
 
-  // Kembalikan data kategori
+  // Format hasil yang dikembalikan
   return {
-    message: "Categories fetched successfully",
+    message: "Categories retrieved successfully",
     categories: categories.map((category) => ({
       id: category.dataValues.id,
       name: category.dataValues.name,
-      created_by: category.dataValues.created_by,
-      created_at: category.dataValues.created_at,
       is_active: category.dataValues.is_active,
+      created_at: category.dataValues.created_at,
+      updated_at: category.dataValues.updated_at,
     })),
   };
 });

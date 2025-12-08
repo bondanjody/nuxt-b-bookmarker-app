@@ -1,7 +1,7 @@
 import { H3Event } from "h3";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import Source from "../../db/models/source.model"; // pastikan model sudah dibuat
-import User, { UserRole } from "../../db/models/user.model";
+import { Source, UserRole } from "../../db/models";
+import { v4 as uuidv4 } from "uuid";
 
 // --------------------------------------------------
 // 🔐 Helper: Validasi JWT (all roles allowed)
@@ -34,7 +34,7 @@ async function authorize(event: H3Event) {
     }
 
     return { username, role };
-  } catch (err) {
+  } catch {
     throw createError({ statusCode: 401, message: "Invalid or expired token" });
   }
 }
@@ -57,7 +57,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Pastikan source belum ada untuk user dan aktif
+  // --------------------------------------------------
+  // 🔍 Validasi source sudah ada untuk user
+  // --------------------------------------------------
   const existing = await Source.findOne({
     where: {
       name,
@@ -73,10 +75,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // Buat ID manual karena model Source menggunakan UUID
-  const { v4: uuidv4 } = await import("uuid");
-
-  // Insert source baru
+  // --------------------------------------------------
+  // ✅ Insert source baru
+  // --------------------------------------------------
   const newSource = await Source.create({
     id: uuidv4(),
     name,
@@ -87,8 +88,9 @@ export default defineEventHandler(async (event) => {
   });
 
   return {
+    status: true,
     message: "Source created successfully",
-    source: {
+    data: {
       id: newSource.dataValues.id,
       name: newSource.dataValues.name,
       link: newSource.dataValues.link,
